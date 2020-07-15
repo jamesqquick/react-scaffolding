@@ -6,7 +6,6 @@ import * as mkdirp from 'mkdirp';
 import { compact, startsWith, sortBy } from 'lodash';
 import * as gitignoreToGlob from 'gitignore-to-glob';
 import { sync as globSync } from 'glob';
-import * as Cache from 'vscode-cache';
 import { QuickPickItem, ViewColumn } from 'vscode';
 
 export interface FSLocation {
@@ -98,15 +97,13 @@ export function directoriesSync(root: string): FSLocation[] {
 }
 
 export function convenienceOptions(
-    roots: WorkspaceRoot[],
-    cache: Cache
+    roots: WorkspaceRoot[]
 ): vscode.QuickPickItem[] {
     const config: string[] = vscode.workspace
         .getConfiguration('reactScaffolding')
         .get('convenienceOptions');
 
     const optionsByName = {
-        last: [buildQuickPickItem(lastSelection(cache), '- last selection')],
         current: [
             buildQuickPickItem(
                 currentEditorPathOption(roots),
@@ -142,32 +139,6 @@ export async function subdirOptionsForRoot(
             };
         }
     );
-}
-
-export function showQuickPick(
-    choices: Promise<vscode.QuickPickItem[]>
-): Thenable<QuickPickItem> {
-    return vscode.window.showQuickPick<vscode.QuickPickItem>(choices, {
-        placeHolder:
-            'First, select an existing path to create relative to ' +
-            '(larger projects may take a moment to load)',
-    });
-}
-
-export async function showInputBox(
-    prompt: string,
-    placeholder: string
-): Promise<string> {
-    try {
-        const input = await vscode.window.showInputBox({
-            prompt: prompt,
-            placeHolder: placeholder,
-        });
-
-        return input;
-    } catch (e) {
-        return;
-    }
 }
 
 export function directories(root: string): Promise<FSLocation[]> {
@@ -237,18 +208,6 @@ export async function openFile(absolutePath: string): Promise<void> {
         if (textDocument) {
             vscode.window.showTextDocument(textDocument, ViewColumn.Active);
         }
-    }
-}
-
-export function lastSelection(cache: Cache): DirectoryOption {
-    if (!cache.has('last')) return;
-    const value = cache.get('last');
-
-    if (typeof value === 'object') {
-        return value as DirectoryOption;
-    } else {
-        cache.forget('last');
-        return;
     }
 }
 
@@ -322,8 +281,7 @@ export function currentEditorPathOption(
 }
 
 export async function dirQuickPickItems(
-    roots: WorkspaceRoot[],
-    cache: Cache
+    roots: WorkspaceRoot[]
 ): Promise<vscode.QuickPickItem[]> {
     const dirOptions = await Promise.all(
         roots.map(async (r) => await subdirOptionsForRoot(r))
@@ -332,35 +290,9 @@ export async function dirQuickPickItems(
         .reduce(flatten)
         .map((o) => buildQuickPickItem(o));
 
-    quickPickItems.unshift(...convenienceOptions(roots, cache));
+    quickPickItems.unshift(...convenienceOptions(roots));
 
     return quickPickItems;
-}
-
-export function cacheSelection(
-    cache: Cache,
-    dir: DirectoryOption,
-    root: WorkspaceRoot
-) {
-    cache.put('last', dir);
-
-    let recentRoots = cache.get('recentRoots') || [];
-
-    const rootIndex = recentRoots.indexOf(root.rootPath);
-    if (rootIndex >= 0) recentRoots.splice(rootIndex, 1);
-
-    recentRoots.unshift(root.rootPath);
-    cache.put('recentRoots', recentRoots);
-}
-
-export function sortRoots(
-    roots: WorkspaceRoot[],
-    desiredOrder: string[]
-): WorkspaceRoot[] {
-    return sortBy(roots, (root) => {
-        const desiredIndex = desiredOrder.indexOf(root.rootPath);
-        return desiredIndex >= 0 ? desiredIndex : roots.length;
-    });
 }
 
 export function rootForDir(
@@ -379,19 +311,14 @@ export default {
     directoriesSync,
     convenienceOptions,
     subdirOptionsForRoot,
-    showQuickPick,
-    showInputBox,
     directories,
     buildQuickPickItem,
     currentEditorPath,
     createFileOrFolder,
     openFile,
-    lastSelection,
     workspaceRoots,
     rootOptions,
     currentEditorPathOption,
     dirQuickPickItems,
-    cacheSelection,
-    sortRoots,
     rootForDir,
 };

@@ -51,7 +51,6 @@
                 "reactScaffolding.convenienceOptions": {
                     "type": "array",
                     "default": [
-                        "last",
                         "current",
                         "root"
                     ],

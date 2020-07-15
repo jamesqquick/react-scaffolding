@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.rootForDir = exports.sortRoots = exports.cacheSelection = exports.dirQuickPickItems = exports.currentEditorPathOption = exports.rootOptions = exports.workspaceRoots = exports.lastSelection = exports.openFile = exports.createFileOrFolder = exports.currentEditorPath = exports.buildQuickPickItem = exports.directories = exports.showInputBox = exports.showQuickPick = exports.subdirOptionsForRoot = exports.convenienceOptions = exports.directoriesSync = exports.configIgnoredGlobs = exports.gitignoreGlobs = exports.flatten = exports.walkupGitignores = exports.invertGlob = exports.isFolderDescriptor = void 0;
+exports.rootForDir = exports.dirQuickPickItems = exports.currentEditorPathOption = exports.rootOptions = exports.workspaceRoots = exports.openFile = exports.createFileOrFolder = exports.currentEditorPath = exports.buildQuickPickItem = exports.directories = exports.subdirOptionsForRoot = exports.convenienceOptions = exports.directoriesSync = exports.configIgnoredGlobs = exports.gitignoreGlobs = exports.flatten = exports.walkupGitignores = exports.invertGlob = exports.isFolderDescriptor = void 0;
 const vscode = require("vscode");
 const fs = require("fs");
 const path = require("path");
@@ -71,12 +71,11 @@ function directoriesSync(root) {
     return results;
 }
 exports.directoriesSync = directoriesSync;
-function convenienceOptions(roots, cache) {
+function convenienceOptions(roots) {
     const config = vscode.workspace
         .getConfiguration('reactScaffolding')
         .get('convenienceOptions');
     const optionsByName = {
-        last: [buildQuickPickItem(lastSelection(cache), '- last selection')],
         current: [
             buildQuickPickItem(currentEditorPathOption(roots), '- current file'),
         ],
@@ -103,28 +102,6 @@ function subdirOptionsForRoot(root) {
     });
 }
 exports.subdirOptionsForRoot = subdirOptionsForRoot;
-function showQuickPick(choices) {
-    return vscode.window.showQuickPick(choices, {
-        placeHolder: 'First, select an existing path to create relative to ' +
-            '(larger projects may take a moment to load)',
-    });
-}
-exports.showQuickPick = showQuickPick;
-function showInputBox(prompt, placeholder) {
-    return __awaiter(this, void 0, void 0, function* () {
-        try {
-            const input = yield vscode.window.showInputBox({
-                prompt: prompt,
-                placeHolder: placeholder,
-            });
-            return input;
-        }
-        catch (e) {
-            return;
-        }
-    });
-}
-exports.showInputBox = showInputBox;
 function directories(root) {
     return new Promise((resolve, reject) => {
         const findDirectories = () => {
@@ -189,19 +166,6 @@ function openFile(absolutePath) {
     });
 }
 exports.openFile = openFile;
-function lastSelection(cache) {
-    if (!cache.has('last'))
-        return;
-    const value = cache.get('last');
-    if (typeof value === 'object') {
-        return value;
-    }
-    else {
-        cache.forget('last');
-        return;
-    }
-}
-exports.lastSelection = lastSelection;
 function workspaceRoots() {
     if (vscode.workspace.workspaceFolders) {
         const multi = vscode.workspace.workspaceFolders.length > 1;
@@ -263,34 +227,17 @@ function currentEditorPathOption(roots) {
     };
 }
 exports.currentEditorPathOption = currentEditorPathOption;
-function dirQuickPickItems(roots, cache) {
+function dirQuickPickItems(roots) {
     return __awaiter(this, void 0, void 0, function* () {
         const dirOptions = yield Promise.all(roots.map((r) => __awaiter(this, void 0, void 0, function* () { return yield subdirOptionsForRoot(r); })));
         let quickPickItems = dirOptions
             .reduce(flatten)
             .map((o) => buildQuickPickItem(o));
-        quickPickItems.unshift(...convenienceOptions(roots, cache));
+        quickPickItems.unshift(...convenienceOptions(roots));
         return quickPickItems;
     });
 }
 exports.dirQuickPickItems = dirQuickPickItems;
-function cacheSelection(cache, dir, root) {
-    cache.put('last', dir);
-    let recentRoots = cache.get('recentRoots') || [];
-    const rootIndex = recentRoots.indexOf(root.rootPath);
-    if (rootIndex >= 0)
-        recentRoots.splice(rootIndex, 1);
-    recentRoots.unshift(root.rootPath);
-    cache.put('recentRoots', recentRoots);
-}
-exports.cacheSelection = cacheSelection;
-function sortRoots(roots, desiredOrder) {
-    return lodash_1.sortBy(roots, (root) => {
-        const desiredIndex = desiredOrder.indexOf(root.rootPath);
-        return desiredIndex >= 0 ? desiredIndex : roots.length;
-    });
-}
-exports.sortRoots = sortRoots;
 function rootForDir(roots, dir) {
     return roots.find((r) => lodash_1.startsWith(dir.fsLocation.absolute, r.rootPath));
 }
@@ -304,20 +251,15 @@ exports.default = {
     directoriesSync,
     convenienceOptions,
     subdirOptionsForRoot,
-    showQuickPick,
-    showInputBox,
     directories,
     buildQuickPickItem,
     currentEditorPath,
     createFileOrFolder,
     openFile,
-    lastSelection,
     workspaceRoots,
     rootOptions,
     currentEditorPathOption,
     dirQuickPickItems,
-    cacheSelection,
-    sortRoots,
     rootForDir,
 };
 //# sourceMappingURL=FileUtils.js.map
