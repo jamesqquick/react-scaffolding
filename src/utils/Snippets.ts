@@ -1,7 +1,7 @@
 export const getBasicComponentSnippet = (name) => {
     return `import React from 'react'
 
-export default function ${name}() {
+export default function ${capitalize(name)}() {
     return (
         <div>
             
