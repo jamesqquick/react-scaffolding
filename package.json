@@ -11,7 +11,8 @@
         "Other"
     ],
     "activationEvents": [
-        "onCommand:extension.createReactComponent"
+        "onCommand:extension.createReactComponent",
+        "onCommand:extension.createReactComponentThatLoadsData"
     ],
     "main": "./out/src/extension",
     "contributes": {
@@ -19,6 +20,10 @@
             {
                 "command": "extension.createReactComponent",
                 "title": "Create React Component"
+            },
+            {
+                "command": "extension.createReactComponentThatLoadsData",
+                "title": "Create React Component That Loads Data in Use Effect"
             }
         ],
         "keybindings": [
